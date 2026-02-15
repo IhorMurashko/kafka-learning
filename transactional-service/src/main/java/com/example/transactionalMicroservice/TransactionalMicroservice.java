@@ -1,11 +1,11 @@
-package com.example.kafka.transactionalService;
+package com.example.transactionalMicroservice;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class TransactionalApp {
+public class TransactionalMicroservice {
     public static void main(String[] args) {
-        SpringApplication.run(TransactionalApp.class, args);
+        SpringApplication.run(TransactionalMicroservice.class, args);
     }
 }

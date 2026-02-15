@@ -25,6 +25,7 @@
     </developers>
     <modules>
         <module>transactional-service</module>
+        <module>core</module>
     </modules>
 
     <properties>
@@ -33,6 +34,7 @@
         <spring-kafka.version>3.3.12</spring-kafka.version>
         <lombok.version>1.18.42</lombok.version>
         <spring-boot-starter-test.version>3.5.10</spring-boot-starter-test.version>
+        <core.version>0.0.1-SNAPSHOT</core.version>
     </properties>
 
     <dependencyManagement>
@@ -59,6 +61,11 @@
                 <artifactId>spring-boot-starter-test</artifactId>
                 <version>${spring-boot-starter-test.version}</version>
                 <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.example</groupId>
+                <artifactId>core</artifactId>
+                <version>${core.version}</version>
             </dependency>
 
         </dependencies>
