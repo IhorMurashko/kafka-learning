@@ -1,0 +1,22 @@
+server:
+  port: 0
+spring:
+  application:
+    name: account-microservice
+  kafka:
+    bootstrap-servers: localhost:19092,localhost:19093,localhost:19094
+    consumer:
+      group-id: account-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: com.example.core.dto.event
+logging:
+  level:
+    org.springframework.kafka: INFO
+    org.springframework.transaction: INFO
+    org.springframework.orm.jpa.JpaTransactionManager: INFO
+
+    org.apache.kafka.clients.producer: INFO
+    org.apache.kafka.clients.producer.internals.TransactionManager: INFO
+    org.apache.kafka.clients.consumer: INFO
