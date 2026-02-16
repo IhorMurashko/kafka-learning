@@ -33,7 +33,9 @@ public class TransactionalKafkaConfig {
                 ProducerConfig.LINGER_MS_CONFIG,
                 Objects.requireNonNull(environment.getProperty("spring.kafka.producer.properties.linger.ms")),
                 ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG,
-                Objects.requireNonNull(environment.getProperty("spring.kafka.producer.properties.request.timeout.ms"))
+                Objects.requireNonNull(environment.getProperty("spring.kafka.producer.properties.request.timeout.ms")),
+                ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG,
+                Objects.requireNonNull(environment.getProperty("spring.kafka.producer.properties.enable.idempotence"))
         );
     }
 
