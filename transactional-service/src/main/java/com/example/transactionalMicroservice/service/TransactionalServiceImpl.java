@@ -20,14 +20,16 @@ public class TransactionalServiceImpl implements TransactionalService {
 
     @Override
     public void createTransaction(TransactionalRequest request) throws ExecutionException, InterruptedException {
+        log.info("Creating transaction with request: {}", request);
         UUID transactionId = UUID.randomUUID();
         log.info("Transaction created with id: {}", transactionId);
         TransactionalCreatedEvent event = new TransactionalCreatedEvent(
-                transactionId.toString(), request.from(), request.to(), request.amount());
-        SendResult<String, TransactionalCreatedEvent> sendResult = kafkaTemplate.send(TransactionalTopic.TRANSACTION_CREATED_EVENT_TOPIC,
-                transactionId.toString(),
-                event).get();
-        log.info("Transaction created event sent to kafka with key {}", transactionId);
+                transactionId.toString(), request.fromUserId(), request.toUserId(), request.amount());
+        log.info("Creating transaction created event: {}", event);
+        SendResult<String, TransactionalCreatedEvent> sendResult = kafkaTemplate
+                .send(TransactionalTopic.TRANSACTION_CREATED_EVENT_TOPIC,
+                        transactionId.toString(), event).get();
+        log.info("Transaction created event sent toUserId kafka with key {}", transactionId);
         log.info("Topic: {}, partition: {}, Offset: {}",
                 sendResult.getRecordMetadata().topic(),
                 sendResult.getRecordMetadata().partition(),
