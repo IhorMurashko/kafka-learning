@@ -9,7 +9,8 @@ import org.springframework.kafka.config.TopicBuilder;
 import java.util.Map;
 
 @Configuration
-public class TransactionalServiceConfig {
+public class TransactionalKafkaTopicsConfig {
+
 
     @Bean
     public NewTopic transactionalCreatedEventTopic() {
