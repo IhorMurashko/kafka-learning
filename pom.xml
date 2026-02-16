@@ -26,6 +26,7 @@
     <modules>
         <module>transactional-service</module>
         <module>core</module>
+        <module>accountMicroservice</module>
     </modules>
 
     <properties>
