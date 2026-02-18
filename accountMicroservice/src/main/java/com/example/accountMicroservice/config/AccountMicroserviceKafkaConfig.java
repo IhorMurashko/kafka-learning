@@ -45,11 +45,12 @@ public class AccountMicroserviceKafkaConfig {
 
     @Bean
     public ConcurrentKafkaListenerContainerFactory<String, Object> kafkaListenerContainerFactory(
-            ConsumerFactory<String, Object> consumerFactory, KafkaTemplate kafkaTemplate
+            ConsumerFactory<String, Object> consumerFactory, KafkaTemplate<String, Object> kafkaTemplate
     ) {
         DefaultErrorHandler errorHandler = new DefaultErrorHandler(new DeadLetterPublishingRecoverer(kafkaTemplate),
                 new FixedBackOff(3000, 3));
-        errorHandler.addNotRetryableExceptions(NonRetryableException.class);
+        errorHandler.addNotRetryableExceptions(NonRetryableException.class,
+                IllegalArgumentException.class, IllegalStateException.class, NullPointerException.class);
         errorHandler.addRetryableExceptions(RetryableException.class);
         ConcurrentKafkaListenerContainerFactory<String, Object> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory);
