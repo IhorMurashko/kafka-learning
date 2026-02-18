@@ -18,6 +18,4 @@ public class TransactionEventHandler {
     public void handle(TransactionalCreatedEvent transactionalCreatedEvent) {
         log.info("Received event: {}", transactionalCreatedEvent);
     }
-
-
 }
