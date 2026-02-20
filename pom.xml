@@ -32,11 +32,13 @@
     <properties>
         <java.version>21</java.version>
         <spring-boot-starter-web.version>3.5.10</spring-boot-starter-web.version>
+        <spring-boot-starter-data-jpa.version>3.5.10</spring-boot-starter-data-jpa.version>
         <spring-kafka.version>3.3.12</spring-kafka.version>
         <lombok.version>1.18.42</lombok.version>
         <spring-boot-devtools.version>3.5.10</spring-boot-devtools.version>
         <spring-boot-starter-test.version>3.5.10</spring-boot-starter-test.version>
         <core.version>0.0.1-SNAPSHOT</core.version>
+        <h2.version>2.4.240</h2.version>
     </properties>
 
     <dependencyManagement>
@@ -78,7 +80,18 @@
                 <artifactId>core</artifactId>
                 <version>${core.version}</version>
             </dependency>
-
+            <dependency>
+                <groupId>com.h2database</groupId>
+                <artifactId>h2</artifactId>
+                <version>${h2.version}</version>
+            </dependency>
+            <!--              Source: https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-data-jpa  -->
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-data-jpa</artifactId>
+                <version>${spring-boot-starter-data-jpa.version}</version>
+                <scope>compile</scope>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
