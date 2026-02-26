@@ -4,8 +4,8 @@ import java.math.BigDecimal;
 
 public record TransactionalCreatedEvent(
         String transactionId,
-        long from,
-        long to,
+        long senderId,
+        long receiverId,
         BigDecimal amount
 ) {
 }

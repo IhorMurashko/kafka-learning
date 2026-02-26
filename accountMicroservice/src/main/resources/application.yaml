@@ -9,6 +9,7 @@ spring:
       group-id: account-group
       properties:
         spring.json.trusted.packages: com.example.core.dto.event
+      isolation-level: read_committed
   datasource:
     url: jdbc:h2:mem:h2
     username: h2
@@ -18,6 +19,7 @@ spring:
     hibernate:
       ddl-auto: create-drop
     database-platform: org.hibernate.dialect.H2Dialect
+    defer-datasource-initialization: true
   h2:
     console:
       enabled: true

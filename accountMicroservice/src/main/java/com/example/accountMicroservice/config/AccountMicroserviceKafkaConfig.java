@@ -1,7 +1,9 @@
 package com.example.accountMicroservice.config;
 
+import com.example.accountMicroservice.exception.InsufficientBalanceException;
 import com.example.accountMicroservice.exception.NonRetryableException;
 import com.example.accountMicroservice.exception.RetryableException;
+import com.example.accountMicroservice.exception.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -38,7 +40,9 @@ public class AccountMicroserviceKafkaConfig {
                 JsonDeserializer.TRUSTED_PACKAGES,
                 Objects.requireNonNull(environment.getProperty("spring.kafka.consumer.properties.spring.json.trusted.packages")),
                 ConsumerConfig.GROUP_ID_CONFIG,
-                Objects.requireNonNull(environment.getProperty("spring.kafka.consumer.group-id"))
+                Objects.requireNonNull(environment.getProperty("spring.kafka.consumer.group-id")),
+                ConsumerConfig.ISOLATION_LEVEL_CONFIG,
+                Objects.requireNonNull(environment.getProperty("spring.kafka.consumer.isolation-level")).toLowerCase()
         );
         return new DefaultKafkaConsumerFactory<>(config);
     }
@@ -50,7 +54,8 @@ public class AccountMicroserviceKafkaConfig {
         DefaultErrorHandler errorHandler = new DefaultErrorHandler(new DeadLetterPublishingRecoverer(kafkaTemplate),
                 new FixedBackOff(3000, 3));
         errorHandler.addNotRetryableExceptions(NonRetryableException.class,
-                IllegalArgumentException.class, IllegalStateException.class, NullPointerException.class);
+                IllegalArgumentException.class, IllegalStateException.class, NullPointerException.class,
+                InsufficientBalanceException.class, UserNotFoundException.class);
         errorHandler.addRetryableExceptions(RetryableException.class);
         ConcurrentKafkaListenerContainerFactory<String, Object> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory);

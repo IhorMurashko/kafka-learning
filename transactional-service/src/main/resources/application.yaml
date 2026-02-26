@@ -9,6 +9,8 @@ spring:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
       acks: all
+      transaction-id-prefix: transactional-service-${random.value}-
+
       #      retries: 10
       properties:
         #        retry.backoff.ms: 1000
@@ -19,7 +21,7 @@ spring:
 logging:
   level:
     org.springframework.kafka: INFO
-    org.springframework.transaction: INFO
+    org.springframework.transaction: TRACE
     org.springframework.orm.jpa.JpaTransactionManager: INFO
 
     org.apache.kafka.clients.producer: INFO
