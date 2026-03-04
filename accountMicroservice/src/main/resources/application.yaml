@@ -8,7 +8,7 @@ spring:
     consumer:
       group-id: account-group
       properties:
-        spring.json.trusted.packages: com.example.core.dto.event
+        spring.json.trusted.packages: com.example.core.dto.event.*
       isolation-level: read_committed
   datasource:
     url: jdbc:h2:mem:h2

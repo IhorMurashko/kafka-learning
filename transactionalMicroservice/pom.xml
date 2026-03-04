@@ -9,7 +9,7 @@
         <version>0.0.1-SNAPSHOT</version>
     </parent>
 
-    <artifactId>transactional-service</artifactId>
+    <artifactId>transactionalMicroservice</artifactId>
 
     <properties>
         <maven.compiler.source>21</maven.compiler.source>
@@ -27,7 +27,6 @@
             <groupId>org.springframework.kafka</groupId>
             <artifactId>spring-kafka</artifactId>
         </dependency>
-
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>

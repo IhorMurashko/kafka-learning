@@ -8,14 +8,18 @@ import com.example.accountMicroservice.model.ProcessedEventEntity;
 import com.example.accountMicroservice.model.User;
 import com.example.accountMicroservice.repository.ProcessedEventRepository;
 import com.example.accountMicroservice.repository.UserRepository;
-import com.example.core.dto.event.TransactionalCreatedEvent;
+import com.example.core.constants.TransactionStatus;
+import com.example.core.dto.event.transaction.TransactionChangedStatusDto;
+import com.example.core.dto.event.transaction.TransactionalCreatedEvent;
 import com.example.core.headers.KafkaHeaderNames;
 import com.example.core.topics.TransactionalTopic;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.kafka.annotation.KafkaHandler;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -24,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.ExecutionException;
 
 @Component
 @RequiredArgsConstructor
@@ -32,12 +37,13 @@ import java.util.Random;
 public class TransactionEventHandler {
     private final ProcessedEventRepository processedEventRepository;
     private final UserRepository userRepository;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
 
     @Transactional
     @KafkaHandler
     public void handle(@Payload TransactionalCreatedEvent transactionalCreatedEvent,
                        @Header(KafkaHeaderNames.MESSAGE_ID) String messageId,
-                       @Header(KafkaHeaders.RECEIVED_KEY) String messageKey) {
+                       @Header(KafkaHeaders.RECEIVED_KEY) String messageKey) throws ExecutionException, InterruptedException {
         log.info("Received event: {}", transactionalCreatedEvent);
 
         boolean existedByMessageId = processedEventRepository.existsByMessageId(messageId);
@@ -70,6 +76,17 @@ public class TransactionEventHandler {
             if (from.getBalance().compareTo(transactionalCreatedEvent.amount()) < 0) {
                 log.warn("Insufficient balance {}", from.getBalance());
                 log.warn("Transaction amount {}", transactionalCreatedEvent.amount());
+                ProducerRecord<String, Object> rejectedRecord = new ProducerRecord<>(
+                        TransactionalTopic.TRANSACTION_PROCESSED_EVENT_TOPIC,
+                        messageKey,
+                        new TransactionChangedStatusDto(
+                                transactionalCreatedEvent.transactionId(),
+                                TransactionStatus.REJECTED,
+                                "Insufficient balance"
+                        )
+                );
+                rejectedRecord.headers()
+                        .add(KafkaHeaderNames.MESSAGE_ID, messageId.getBytes());
                 throw new InsufficientBalanceException("Insufficient balance");
             } else {
                 from.setBalance(from.getBalance().subtract(transactionalCreatedEvent.amount()));
@@ -77,6 +94,14 @@ public class TransactionEventHandler {
                 userRepository.saveAllAndFlush(List.of(from, to));
                 log.info("Balance updated: {}", from.getBalance());
                 log.info("Balance updated: {}", to.getBalance());
+                ProducerRecord<String, Object> confirmedRecord = new ProducerRecord<>(
+                        TransactionalTopic.TRANSACTION_PROCESSED_EVENT_TOPIC,
+                        messageKey,
+                        new TransactionChangedStatusDto(
+                                transactionalCreatedEvent.transactionId(),
+                                TransactionStatus.CONFIRMED,
+                                "Confirmed transaction"
+                        ));
             }
 
             processedEventRepository.save(
@@ -86,5 +111,22 @@ public class TransactionEventHandler {
             log.error("Error saving processed event: {}", ex.getMessage());
             throw new NonRetryableException(ex.getMessage(), ex);
         }
+
+        try {
+            TransactionChangedStatusDto transactionChangedStatusEvent = new TransactionChangedStatusDto(
+                    messageKey, TransactionStatus.CONFIRMED, "Transaction confirmed"
+            );
+            ProducerRecord<String, Object> producerRecord = new ProducerRecord<>(
+                    TransactionalTopic.TRANSACTION_PROCESSED_EVENT_TOPIC,
+                    messageKey,
+                    transactionChangedStatusEvent
+            );
+            kafkaTemplate.send(producerRecord).get();
+            log.info("Event sent with key {}", messageKey);
+        } catch (Exception e) {
+            log.error("Error sending processed event: {}", e.getMessage());
+            throw new NonRetryableException(e.getMessage(), e);
+        }
+
     }
 }

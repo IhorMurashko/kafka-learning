@@ -1,4 +1,4 @@
-package com.example.core.dto.event;
+package com.example.core.dto.event.transaction;
 
 import java.math.BigDecimal;
 

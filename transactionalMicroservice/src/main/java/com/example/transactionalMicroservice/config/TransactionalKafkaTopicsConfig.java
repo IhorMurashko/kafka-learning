@@ -20,4 +20,12 @@ public class TransactionalKafkaTopicsConfig {
                 .configs(Map.of("min.insync.replicas", "2"))
                 .build();
     }
+    @Bean
+    public NewTopic transactionalChangedStatusTopic() {
+        return TopicBuilder.name(TransactionalTopic.TRANSACTION_PROCESSED_EVENT_TOPIC)
+                .partitions(3)
+                .replicas(3)
+                .configs(Map.of("min.insync.replicas", "2"))
+                .build();
+    }
 }

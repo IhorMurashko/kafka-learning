@@ -1,9 +1,11 @@
 package com.example.transactionalMicroservice.service;
 
-import com.example.core.dto.event.TransactionalCreatedEvent;
+import com.example.core.constants.TransactionStatus;
+import com.example.core.dto.event.transaction.TransactionalCreatedEvent;
 import com.example.core.dto.web.TransactionalRequest;
 import com.example.core.headers.KafkaHeaderNames;
 import com.example.core.topics.TransactionalTopic;
+import com.example.transactionalMicroservice.dto.TransactionalEntityDto;
 import com.example.transactionalMicroservice.model.TransactionalEntity;
 import com.example.transactionalMicroservice.repository.TransactionalRepository;
 import lombok.RequiredArgsConstructor;
@@ -14,17 +16,18 @@ import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Transactional("transactionManager")
 public class TransactionalServiceImpl implements TransactionalService {
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private final TransactionalRepository transactionalRepository;
 
-    @Transactional("transactionManager")
     @Override
     public void createTransaction(TransactionalRequest request) throws ExecutionException, InterruptedException {
         log.info("Got transaction request: {}", request);
@@ -56,8 +59,26 @@ public class TransactionalServiceImpl implements TransactionalService {
                 transactionId,
                 request.senderId(),
                 request.receiverId(),
-                request.amount()
+                request.amount(),
+                TransactionStatus.WAITING,
+                LocalDateTime.now(),
+                null
         ));
         log.info("Transaction saved: {}", transactionId);
+    }
+
+    @Override
+    public void save(TransactionalEntityDto transactionalEntityDto) {
+        if (transactionalEntityDto == null) {
+            log.error("TransactionalEntityDto cannot be null");
+            throw new IllegalArgumentException("TransactionalEntityDto cannot be null");
+        }
+        TransactionalEntity entity = transactionalRepository.findById(transactionalEntityDto.id())
+                .orElseThrow(() -> new IllegalArgumentException("TransactionalEntity not found"));
+
+        entity.setTransactionStatus(transactionalEntityDto.transactionStatus());
+        log.info("Transaction status updated: {}", transactionalEntityDto.transactionStatus());
+        transactionalRepository.save(entity);
+        log.info("Transaction was saved successfully");
     }
 }
