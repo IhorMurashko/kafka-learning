@@ -1,5 +1,6 @@
 package com.example.accountMicroservice.handler;
 
+import com.example.accountMicroservice.constant.AccountNames;
 import com.example.accountMicroservice.exception.InsufficientBalanceException;
 import com.example.accountMicroservice.exception.NonRetryableException;
 import com.example.accountMicroservice.exception.RetryableException;
@@ -9,6 +10,7 @@ import com.example.accountMicroservice.model.User;
 import com.example.accountMicroservice.repository.ProcessedEventRepository;
 import com.example.accountMicroservice.repository.UserRepository;
 import com.example.core.constants.TransactionStatus;
+import com.example.core.dto.event.logging.LoggingDto;
 import com.example.core.dto.event.transaction.TransactionChangedStatusDto;
 import com.example.core.dto.event.transaction.TransactionalCreatedEvent;
 import com.example.core.headers.KafkaHeaderNames;
@@ -26,6 +28,7 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
@@ -49,6 +52,13 @@ public class TransactionEventHandler {
         boolean existedByMessageId = processedEventRepository.existsByMessageId(messageId);
         if (existedByMessageId) {
             log.info("Duplicated message ID: {}", messageId);
+            kafkaTemplate.send(
+                    TransactionalTopic.WRITE_LOG,
+                    new LoggingDto(Instant.now(),
+                            "Duplicated message ID: " + messageId,
+                            AccountNames.ACCOUNT_SERVICE
+                    )
+            );
             return;
         }
 
@@ -87,6 +97,14 @@ public class TransactionEventHandler {
                 );
                 rejectedRecord.headers()
                         .add(KafkaHeaderNames.MESSAGE_ID, messageId.getBytes());
+                kafkaTemplate.send(rejectedRecord).get();
+                kafkaTemplate.send(
+                        TransactionalTopic.WRITE_LOG,
+                        new LoggingDto(Instant.now(),
+                                "Insufficient balance: " + from.getBalance() + " < " + transactionalCreatedEvent.amount(),
+                                AccountNames.ACCOUNT_SERVICE
+                        )
+                );
                 throw new InsufficientBalanceException("Insufficient balance");
             } else {
                 from.setBalance(from.getBalance().subtract(transactionalCreatedEvent.amount()));
@@ -102,12 +120,26 @@ public class TransactionEventHandler {
                                 TransactionStatus.CONFIRMED,
                                 "Confirmed transaction"
                         ));
+                kafkaTemplate.send(confirmedRecord).get();
+                kafkaTemplate.send(
+                        TransactionalTopic.WRITE_LOG,
+                        new LoggingDto(Instant.now(),
+                                "Confirmed transaction: " + from.getBalance() + " - " + transactionalCreatedEvent.amount() + " = " + to.getBalance(),
+                                AccountNames.ACCOUNT_SERVICE
+                        ));
+
             }
 
             processedEventRepository.save(
                     new ProcessedEventEntity(messageId, transactionalCreatedEvent.transactionId()));
             log.info("Processed event saved: {}", transactionalCreatedEvent);
         } catch (DataIntegrityViolationException ex) {
+            kafkaTemplate.send(
+                    TransactionalTopic.WRITE_LOG,
+                    new LoggingDto(Instant.now(),
+                            "Data integrity violation: " + ex.getMessage(),
+                            AccountNames.ACCOUNT_SERVICE
+                    ));
             log.error("Error saving processed event: {}", ex.getMessage());
             throw new NonRetryableException(ex.getMessage(), ex);
         }
@@ -122,11 +154,22 @@ public class TransactionEventHandler {
                     transactionChangedStatusEvent
             );
             kafkaTemplate.send(producerRecord).get();
+            kafkaTemplate.send(
+                    TransactionalTopic.WRITE_LOG,
+                    new LoggingDto(Instant.now(),
+                            "Transaction confirmed: " + transactionChangedStatusEvent,
+                            AccountNames.ACCOUNT_SERVICE
+                    ));
             log.info("Event sent with key {}", messageKey);
         } catch (Exception e) {
             log.error("Error sending processed event: {}", e.getMessage());
+            kafkaTemplate.send(
+                    TransactionalTopic.WRITE_LOG,
+                    new LoggingDto(Instant.now(),
+                            "Error sending processed event: " + e.getMessage(),
+                            AccountNames.ACCOUNT_SERVICE
+                    ));
             throw new NonRetryableException(e.getMessage(), e);
         }
-
     }
 }

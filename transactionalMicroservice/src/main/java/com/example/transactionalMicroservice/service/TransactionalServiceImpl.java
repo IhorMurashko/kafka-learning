@@ -1,10 +1,12 @@
 package com.example.transactionalMicroservice.service;
 
 import com.example.core.constants.TransactionStatus;
+import com.example.core.dto.event.logging.LoggingDto;
 import com.example.core.dto.event.transaction.TransactionalCreatedEvent;
 import com.example.core.dto.web.TransactionalRequest;
 import com.example.core.headers.KafkaHeaderNames;
 import com.example.core.topics.TransactionalTopic;
+import com.example.transactionalMicroservice.constant.TransactionalNames;
 import com.example.transactionalMicroservice.dto.TransactionalEntityDto;
 import com.example.transactionalMicroservice.model.TransactionalEntity;
 import com.example.transactionalMicroservice.repository.TransactionalRepository;
@@ -16,6 +18,7 @@ import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -65,6 +68,12 @@ public class TransactionalServiceImpl implements TransactionalService {
                 null
         ));
         log.info("Transaction saved: {}", transactionId);
+        kafkaTemplate.send(
+                TransactionalTopic.WRITE_LOG,
+                new LoggingDto(Instant.now(),
+                        "Transaction created: " + event,
+                        TransactionalNames.TRANSACTIONAL_SERVICE
+                ));
     }
 
     @Override

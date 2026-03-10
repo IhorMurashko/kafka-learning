@@ -2,6 +2,7 @@ package com.example.transactionalMicroservice.saga;
 
 import com.example.core.dto.event.transaction.TransactionChangedStatusDto;
 import com.example.core.headers.KafkaHeaderNames;
+import com.example.core.topics.TransactionalTopic;
 import com.example.transactionalMicroservice.dto.TransactionalEntityDto;
 import com.example.transactionalMicroservice.service.TransactionalService;
 import lombok.RequiredArgsConstructor;
@@ -16,13 +17,12 @@ import org.springframework.stereotype.Component;
 
 import java.util.UUID;
 
-import static com.example.core.topics.TransactionalTopic.TRANSACTION_PROCESSED_EVENT_TOPIC;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
-@KafkaListener(topics = {TRANSACTION_PROCESSED_EVENT_TOPIC},
-        groupId = "transactional-group")
+@KafkaListener(topics = {TransactionalTopic.TRANSACTION_PROCESSED_EVENT_TOPIC},
+groupId = "transaction-orchestration-group")
 public class SagaTransactionOrchestration {
 
     private final KafkaTemplate<String, Object> kafkaTemplate;
@@ -30,9 +30,9 @@ public class SagaTransactionOrchestration {
 
     @KafkaHandler
     public void handle(@Payload TransactionChangedStatusDto transactionChangedStatusDto,
-                       @Header(KafkaHeaderNames.MESSAGE_ID) String messageId,
+                       @Header(value = KafkaHeaderNames.MESSAGE_ID, required = false) String messageId,
                        @Header(KafkaHeaders.RECEIVED_KEY) String messageKey) {
-
+        log.info("Received event: {}", transactionChangedStatusDto);
         transactionalService.save(new TransactionalEntityDto(
                 UUID.fromString(transactionChangedStatusDto.transactionId()),
                 null,

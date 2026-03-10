@@ -92,7 +92,6 @@ public class TransactionalKafkaConfig {
     ) {
         DefaultErrorHandler errorHandler = new DefaultErrorHandler(new DeadLetterPublishingRecoverer(kafkaTemplate),
                 new FixedBackOff(3000, 3));
-        errorHandler.addNotRetryableExceptions(Exception.class);
         errorHandler.addRetryableExceptions(HttpConnectTimeoutException.class);
         ConcurrentKafkaListenerContainerFactory<String, Object> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory);
