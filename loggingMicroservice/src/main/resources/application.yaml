@@ -2,14 +2,17 @@ server:
   port: 0
 spring:
   application:
-    name: account-microservice
+    name: loggingMicroservice
   kafka:
     bootstrap-servers: localhost:19092,localhost:19093,localhost:19094
     consumer:
-      group-id: account-group
       properties:
         spring.json.trusted.packages: com.example.core.dto.event.*
       isolation-level: read_committed
+      group-id: logging-group
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: true
   datasource:
     url: jdbc:h2:mem:h2
     username: h2
@@ -23,13 +26,3 @@ spring:
   h2:
     console:
       enabled: true
-      path: /h2-console
-logging:
-  level:
-    org.springframework.kafka: INFO
-    org.springframework.transaction: INFO
-    org.springframework.orm.jpa.JpaTransactionManager: INFO
-
-    org.apache.kafka.clients.producer: INFO
-    org.apache.kafka.clients.producer.internals.TransactionManager: INFO
-    org.apache.kafka.clients.consumer: INFO

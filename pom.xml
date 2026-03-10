@@ -24,16 +24,19 @@
         </developer>
     </developers>
     <modules>
-        <module>transactional-service</module>
+        <module>transactionalMicroservice</module>
         <module>core</module>
         <module>accountMicroservice</module>
+        <module>loggingMicroservice</module>
     </modules>
 
     <properties>
         <java.version>21</java.version>
+        <spring-boot-starter.version>3.5.10</spring-boot-starter.version>
         <spring-boot-starter-web.version>3.5.10</spring-boot-starter-web.version>
         <spring-boot-starter-data-jpa.version>3.5.10</spring-boot-starter-data-jpa.version>
         <spring-kafka.version>3.3.12</spring-kafka.version>
+        <spring-boot-starter-validation.version>3.5.10</spring-boot-starter-validation.version>
         <lombok.version>1.18.42</lombok.version>
         <spring-boot-devtools.version>3.5.10</spring-boot-devtools.version>
         <spring-boot-starter-test.version>3.5.10</spring-boot-starter-test.version>
@@ -45,6 +48,12 @@
         <dependencies>
             <dependency>
                 <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter</artifactId>
+                <version>${spring-boot-starter.version}</version>
+                <scope>compile</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-starter-web</artifactId>
                 <version>${spring-boot-starter-web.version}</version>
             </dependency>
@@ -53,7 +62,12 @@
                 <artifactId>spring-kafka</artifactId>
                 <version>${spring-kafka.version}</version>
             </dependency>
-
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-validation</artifactId>
+                <version>${spring-boot-starter-validation.version}</version>
+                <scope>compile</scope>
+            </dependency>
             <dependency>
                 <groupId>org.projectlombok</groupId>
                 <artifactId>lombok</artifactId>
